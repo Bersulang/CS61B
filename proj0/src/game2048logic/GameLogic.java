@@ -19,20 +19,32 @@ public class GameLogic {
      *              if no merge occurs, then return 0.
      */
     public static int moveTileUpAsFarAsPossible(int[][] board, int r, int c, int minR) {
-        // TODO: Fill this in in tasks 2, 3, 4
-        int value = board[r][c];
-        for(int i = r; i > minR; i--) {
-            if(board[i - 1][c] == 0) {
-                board[i - 1][c] = value;
-                board[i][c] = 0;
-            } else if(board[i - 1][c] == value && board[i][c] == value) {
-                board[i - 1][c] = value * 2;
-                board[i][c] = 0;
-                return i;
-            }
+        if (board[r][c] == 0) return 0;  //当前格子无数字直接结束，避免浪费时间
+
+        int currVal = board[r][c];
+        int targetR = r;
+
+        // Step 1: 往上滑动直到不能再滑或碰到数字
+        while (targetR > minR && board[targetR - 1][c] == 0) {
+            targetR--;
         }
-        return 0;
+
+        // Step 2: 判断是否可以合并
+        if (targetR > minR && board[targetR - 1][c] == currVal) {
+            board[targetR - 1][c] *= 2;
+            board[r][c] = 0;
+            return 1 + (targetR - 1);
+        }
+
+        // Step 3: 否则尝试滑动（如果目标位置改变）
+        if (targetR != r) {
+            board[targetR][c] = currVal;
+            board[r][c] = 0;
+        }
+
+        return 0; // 没有合并
     }
+
 
     /**
      * Modifies the board to simulate the process of tilting column c
