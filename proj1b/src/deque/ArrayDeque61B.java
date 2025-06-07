@@ -23,9 +23,7 @@ public class ArrayDeque61B<T> implements Deque61B<T> {
         if (size == sentinel.length) {
             resizelarge(sentinel.length * 2);
         }
-        if (nextfirst < 0) {
-            nextfirst = Math.floorMod(nextfirst, sentinel.length);
-        }
+        nextfirst = Math.floorMod(nextfirst, sentinel.length);
         sentinel[nextfirst] = x;
         nextfirst--;
         size++;
@@ -36,36 +34,48 @@ public class ArrayDeque61B<T> implements Deque61B<T> {
         if (size == sentinel.length) {
             resizelarge(sentinel.length * 2);
         }
-        if (nextlast > sentinel.length - 1) {
-            nextlast = Math.floorMod(nextlast, sentinel.length);
-        }
+        nextlast = Math.floorMod(nextlast, sentinel.length);
         sentinel[nextlast] = x;
         nextlast++;
         size++;
     }
 
-    public void resizelarge(int newsize) {
+/*     实现上似乎还是有些混乱，之后再来研究
+        public void resizelarge(int newsize) {
         T[] newArr = (T[]) new Object[newsize];
-        int copystart = nextfirst;
+        int copystart = Math.floorMod(nextfirst, sentinel.length);
         for (int i = 0; i < size; i++) {
             newArr[copystart] = get(i);
             copystart++;
         }
         sentinel = newArr;
-        nextfirst = nextfirst - 1;
+        nextfirst = Math.floorMod(nextfirst - 1,sentinel.length);
         nextlast = copystart;
+    }*/
+
+    //替代方案，逻辑结构复制
+    public void resizelarge(int newsize) {
+        T[] newArr = (T[]) new Object[newsize];
+        for (int i = 0; i < size; i++) {
+            newArr[i] = get(i);  // 逻辑顺序插入
+        }
+        sentinel = newArr;
+        nextfirst = newsize - 1;
+        nextlast = size;
     }
 
+
     public void resizesmall() {
-        T[] newArr = (T[]) new Object[size / 3];
+        int newCapacity = Math.max(16, sentinel.length / 2); // 16及以下则无需改动大小
+        T[] newArr = (T[]) new Object[newCapacity];
         for (int i = 0; i < size; i++) {
             newArr[i] = get(i);
         }
-        nextfirst = newArr.length - 1;
-        nextlast = size;
         sentinel = newArr;
-
+        nextfirst = newCapacity - 1;
+        nextlast = size;
     }
+
 
     @Override
     public List<T> toList() {
@@ -95,25 +105,38 @@ public class ArrayDeque61B<T> implements Deque61B<T> {
 
     @Override
     public T removeFirst() {
-        if (size >= 16 && (sentinel.length / size) < 0.25) {
+        if (isEmpty()) {
+            return null;
+        }
+
+        nextfirst = Math.floorMod(nextfirst + 1, sentinel.length);
+        T returnnum = sentinel[nextfirst];
+        sentinel[nextfirst] = null;
+        size--;
+
+        if (sentinel.length >= 16 && (double) size / sentinel.length < 0.25) {
             resizesmall();
         }
-        T returnnum = get(0);
-        sentinel[nextfirst + 1] = null;
-        nextfirst++;
-        size--;
+
         return returnnum;
     }
 
+
     @Override
     public T removeLast() {
-        if (size >= 16 && (sentinel.length / size) < 0.25) {
+        if (isEmpty()) {
+            return null;
+        }
+
+        nextlast = Math.floorMod(nextlast - 1, sentinel.length);
+        T returnnum = sentinel[nextlast];
+        sentinel[nextlast] = null;
+        size--;
+
+        if (sentinel.length >= 16 && (double) size / sentinel.length < 0.25) {
             resizesmall();
         }
-        T returnnum = get(size - 1);
-        sentinel[nextlast - 1] = null;
-        nextlast--;
-        size--;
+
         return returnnum;
     }
 
@@ -122,10 +145,7 @@ public class ArrayDeque61B<T> implements Deque61B<T> {
         if (index < 0 || index >= size) {
             return null;
         }
-        int getindex = index + nextfirst + 1;
-        if (getindex > sentinel.length - 1) {
-            getindex = Math.floorMod(getindex, sentinel.length);
-        }
+        int getindex = Math.floorMod(index + nextfirst + 1,sentinel.length);
         return sentinel[getindex];
     }
 
